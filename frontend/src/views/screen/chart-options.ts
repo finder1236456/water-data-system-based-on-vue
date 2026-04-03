@@ -134,6 +134,15 @@ export const createSavingOption = (): EChartsOption => ({
 })
 
 export const createDonutOption = (item: UsageItem): EChartsOption => ({
+  tooltip: {
+    trigger: 'item',
+    formatter: `${item.name}<br />占比：{c}%`,
+    backgroundColor: 'rgba(6, 18, 36, 0.92)',
+    borderColor: 'rgba(103, 187, 255, 0.35)',
+    textStyle: {
+      color: '#eaf6ff',
+    },
+  },
   title: {
     text: `${item.value}%`,
     left: 'center',
@@ -151,9 +160,21 @@ export const createDonutOption = (item: UsageItem): EChartsOption => ({
       center: ['50%', '50%'],
       startAngle: 90,
       label: { show: false },
+      emphasis: {
+        scale: true,
+        scaleSize: 6,
+      },
       data: [
-        { value: item.value, itemStyle: { color: item.color } },
-        { value: 100 - item.value, itemStyle: { color: 'rgba(255,255,255,0.2)' } },
+        {
+          value: item.value,
+          name: item.name,
+          itemStyle: { color: item.color },
+        },
+        {
+          value: 100 - item.value,
+          name: '其余占比',
+          itemStyle: { color: 'rgba(255,255,255,0.2)' },
+        },
       ],
     },
   ],

@@ -66,20 +66,20 @@ const handleLogin = async () => {
     <section class="login-hero">
       <div class="login-hero__badge">智慧水务平台</div>
       <h1>水务数据统一管理入口</h1>
-      <p>支持用户、管理员和维修人员登录，系统会根据账号名称自动进入对应的页面。</p>
+      <p>支持用户、管理员和维修人员登录，系统会根据账号身份自动进入对应的业务页面。</p>
 
       <div class="role-list">
         <div class="role-card role-card--user">
           <strong>用户</strong>
-          <span>查看数据看板与基础业务信息</span>
+          <span>进入水务大屏，查看分析、定额、报修和 AI 咨询模块。</span>
         </div>
         <div class="role-card role-card--admin">
           <strong>管理员</strong>
-          <span>管理平台配置与账户权限</span>
+          <span>进入后台管理页面，维护账号权限并修改平台数据。</span>
         </div>
         <div class="role-card role-card--repair">
           <strong>维修人员</strong>
-          <span>处理告警、巡检与维护工单</span>
+          <span>进入大屏并结合移动端进行故障快速上报和处理。</span>
         </div>
       </div>
     </section>
@@ -88,7 +88,7 @@ const handleLogin = async () => {
       <div class="login-card__header">
         <span class="login-card__tag">LOGIN</span>
         <h2>账号登录</h2>
-        <p>输入账号密码后，将根据账号身份自动跳转。</p>
+        <p>输入账号密码后，系统将自动识别身份并跳转至对应页面。</p>
       </div>
 
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top" class="login-form">

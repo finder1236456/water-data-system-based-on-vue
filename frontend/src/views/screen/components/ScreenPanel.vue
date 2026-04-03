@@ -41,6 +41,24 @@ defineProps<{
   &__body {
     height: calc(100% - 52px);
     min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(103, 187, 255, 0.45) rgba(255, 255, 255, 0.08);
   }
+}
+
+:deep(.screen-panel__body::-webkit-scrollbar) {
+  width: 8px;
+}
+
+:deep(.screen-panel__body::-webkit-scrollbar-thumb) {
+  border-radius: 999px;
+  background: rgba(103, 187, 255, 0.45);
+}
+
+:deep(.screen-panel__body::-webkit-scrollbar-track) {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
 }
 </style>

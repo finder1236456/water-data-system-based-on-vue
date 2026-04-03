@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import AdminView from '@/views/admin/AdminView.vue'
 import LoginView from '@/views/login/LoginView.vue'
 import ScreenView from '@/views/screen/index.vue'
-import RolePlaceholderView from '@/views/screen/RolePlaceholderView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -17,13 +17,17 @@ const router = createRouter({
     },
     {
       path: '/screen',
-      name: 'screen',
+      redirect: '/screen/user',
+    },
+    {
+      path: '/screen/:role(user|repair)',
+      name: 'role-screen',
       component: ScreenView,
     },
     {
-      path: '/screen/:role(user|admin|repair)',
-      name: 'role-screen',
-      component: RolePlaceholderView,
+      path: '/admin',
+      name: 'admin',
+      component: AdminView,
     },
   ],
 })

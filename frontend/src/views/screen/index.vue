@@ -1,13 +1,32 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import BaseChart from '@/components/BaseChart.vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/user'
 import ScreenHeader from './components/ScreenHeader.vue'
-import ScreenPanel from './components/ScreenPanel.vue'
-import { alarms, historyCards, progressList, usageShare, waterStats } from './data'
-import { createBarOption, createDonutOption, createLineOption, createSavingOption } from './chart-options'
+import AnalysisModule from './components/AnalysisModule.vue'
+import QuotaModule from './components/QuotaModule.vue'
+import RepairModule from './components/RepairModule.vue'
+import AiModule from './components/AiModule.vue'
+import { moduleNav } from './data'
+
+const route = useRoute()
+const router = useRouter()
+const userStore = useUserStore()
 
 const now = ref(new Date())
+const activeModule = ref('analysis')
 let timer: number | undefined
+
+const isAnalysisModule = computed(() => activeModule.value === 'analysis')
+
+const roleLabel = computed(() => {
+  const map: Record<string, string> = {
+    user: '用户端大屏',
+    repair: '维修端大屏',
+  }
+
+  return map[String(route.params.role)] ?? '业务大屏'
+})
 
 const timeText = computed(() =>
   now.value.toLocaleTimeString('zh-CN', {
@@ -29,9 +48,10 @@ const weekdayText = computed(() =>
   }),
 )
 
-const lineOption = computed(() => createLineOption())
-const barOption = computed(() => createBarOption())
-const savingOption = computed(() => createSavingOption())
+const handleLogout = async () => {
+  userStore.clearUserInfo()
+  await router.push('/login')
+}
 
 onMounted(() => {
   timer = window.setInterval(() => {
@@ -49,128 +69,22 @@ onBeforeUnmount(() => {
     <div class="screen-page__bg"></div>
 
     <div class="screen-page__content">
-      <ScreenHeader :time-text="timeText" :date-text="dateText" :weekday-text="weekdayText" />
+      <ScreenHeader
+        :time-text="timeText"
+        :date-text="dateText"
+        :weekday-text="weekdayText"
+        :role-label="roleLabel"
+        :nav-items="moduleNav"
+        :active-key="activeModule"
+        @navigate="activeModule = $event"
+        @logout="handleLogout"
+      />
 
-      <main class="screen-page__main">
-        <section class="side-column">
-          <ScreenPanel title="用水数据" unit="m³">
-            <div class="stat-grid">
-              <div v-for="item in waterStats" :key="item.label" class="water-stat">
-                <div class="water-stat__ring">
-                  <svg viewBox="0 0 120 120">
-                    <circle cx="60" cy="60" r="52" class="track" />
-                    <circle
-                      cx="60"
-                      cy="60"
-                      r="52"
-                      class="progress"
-                      :style="{ strokeDasharray: `${(327 * item.percent) / 100} 327` }"
-                    />
-                  </svg>
-                  <span>{{ item.percent }}%</span>
-                </div>
-                <div class="water-stat__info">
-                  <h4>{{ item.label }}</h4>
-                  <p>{{ item.value }} {{ item.unit }}</p>
-                </div>
-              </div>
-            </div>
-          </ScreenPanel>
-
-          <ScreenPanel title="用水占比" unit="单位:m">
-            <div class="share-grid">
-              <div v-for="item in usageShare" :key="item.name" class="share-item">
-                <div class="share-chart">
-                  <BaseChart :option="createDonutOption(item)" />
-                </div>
-                <span>{{ item.name }}</span>
-              </div>
-            </div>
-            <div class="progress-list">
-              <div v-for="item in progressList" :key="item.name" class="progress-row">
-                <span>{{ item.name }}</span>
-                <el-progress
-                  :percentage="Math.round((item.value / item.total) * 100)"
-                  :show-text="false"
-                  color="#56a8ff"
-                  :stroke-width="12"
-                />
-                <span>{{ item.value }}/{{ item.total }}</span>
-              </div>
-            </div>
-          </ScreenPanel>
-
-          <ScreenPanel title="本年月度用水量走势" unit="单位:m">
-            <div class="chart-box">
-              <BaseChart :option="lineOption" />
-            </div>
-          </ScreenPanel>
-        </section>
-
-        <section class="center-column">
-          <div class="center-glow">
-            <div class="glow-halo"></div>
-            <div class="glow-ring"></div>
-          </div>
-
-          <ScreenPanel title="用水告警处置台账" unit="单位:m">
-            <el-table :data="alarms" height="100%" class="alarm-table">
-              <el-table-column prop="type" label="报警类型" min-width="110" />
-              <el-table-column prop="region" label="报警区域" min-width="90" />
-              <el-table-column prop="time" label="报警时间" min-width="90" />
-              <el-table-column prop="content" label="报警内容" min-width="120" />
-              <el-table-column prop="reporter" label="报警人" min-width="80" />
-              <el-table-column prop="status" label="处理状态" min-width="90">
-                <template #default="{ row }">
-                  <span class="status-tag">{{ row.status }}</span>
-                </template>
-              </el-table-column>
-              <el-table-column prop="repairer" label="维修人员" min-width="90" />
-            </el-table>
-          </ScreenPanel>
-        </section>
-
-        <section class="side-column">
-          <ScreenPanel title="历年用水量数据" unit="单位:万吨">
-            <div class="hex-grid">
-              <div v-for="item in historyCards" :key="item.year" class="hex-card">
-                <div class="hex-card__inner">
-                  <strong>{{ item.value }}</strong>
-                  <span>万吨</span>
-                  <small>{{ item.year }}</small>
-                </div>
-              </div>
-            </div>
-          </ScreenPanel>
-
-          <ScreenPanel title="节水比" unit="单位:万吨">
-            <div class="saving-panel">
-              <div class="saving-chart">
-                <BaseChart :option="savingOption" />
-              </div>
-              <div class="saving-data">
-                <div>
-                  <label>月基准水量</label>
-                  <strong>4000 m³</strong>
-                </div>
-                <div>
-                  <label>上月用水量</label>
-                  <strong>3900 m³</strong>
-                </div>
-                <div>
-                  <label>上月节水量</label>
-                  <strong>100 m³</strong>
-                </div>
-              </div>
-            </div>
-          </ScreenPanel>
-
-          <ScreenPanel title="年度用水量同比分析图" unit="单位:m">
-            <div class="chart-box">
-              <BaseChart :option="barOption" />
-            </div>
-          </ScreenPanel>
-        </section>
+      <main class="screen-page__main" :class="{ 'screen-page__main--stacked': !isAnalysisModule }">
+        <AnalysisModule v-if="activeModule === 'analysis'" />
+        <QuotaModule v-else-if="activeModule === 'quota'" />
+        <RepairModule v-else-if="activeModule === 'repair'" />
+        <AiModule v-else />
       </main>
     </div>
   </div>
@@ -212,268 +126,18 @@ onBeforeUnmount(() => {
     display: grid;
     grid-template-columns: 404px minmax(520px, 1fr) 404px;
     gap: $screen-gap;
-    padding: 8px 14px 14px;
+    padding: 12px 18px 18px;
     height: calc(100% - $header-height);
     min-height: 0;
   }
-}
 
-.side-column,
-.center-column {
-  display: grid;
-  gap: $screen-gap;
-  min-height: 0;
-}
-
-.side-column {
-  grid-template-rows: 1.25fr 1.4fr 1.15fr;
-}
-
-.center-column {
-  grid-template-rows: minmax(0, 1fr) 200px;
-}
-
-.stat-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px 12px;
-  padding: 18px 14px 16px;
-}
-
-.water-stat {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-
-  &__ring {
-    position: relative;
-    width: 96px;
-    height: 96px;
-    flex-shrink: 0;
-
-    svg {
-      width: 100%;
-      height: 100%;
-      transform: rotate(-90deg);
-    }
-
-    .track {
-      fill: none;
-      stroke: rgba(85, 173, 255, 0.18);
-      stroke-width: 6;
-    }
-
-    .progress {
-      fill: none;
-      stroke: $color-accent;
-      stroke-width: 6;
-      stroke-linecap: round;
-    }
-
-    span {
-      position: absolute;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      font-weight: 700;
-      color: #f4fbff;
-    }
-  }
-
-  &__info {
-    h4 {
-      margin: 0 0 6px;
-      font-size: 16px;
-      color: #ddecff;
-    }
-
-    p {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 700;
-      color: #ffffff;
-    }
-  }
-}
-
-.share-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-  padding: 16px 10px 8px;
-}
-
-.share-item {
-  text-align: center;
-  color: #bddbff;
-  font-size: 14px;
-}
-
-.share-chart {
-  height: 110px;
-}
-
-.progress-list {
-  padding: 2px 18px 16px;
-}
-
-.progress-row {
-  display: grid;
-  grid-template-columns: 70px 1fr 92px;
-  gap: 10px;
-  align-items: center;
-  margin-top: 10px;
-  color: #b6d7ff;
-  font-size: 14px;
-}
-
-.chart-box {
-  height: 100%;
-  min-height: 0;
-}
-
-.center-glow {
-  position: relative;
-  min-height: 0;
-  overflow: hidden;
-  border-radius: $screen-radius;
-}
-
-.glow-halo {
-  position: absolute;
-  inset: 22% 16% 10%;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 50% 62%, rgba(113, 244, 255, 0.95) 0, rgba(113, 244, 255, 0.35) 18%, rgba(113, 244, 255, 0.08) 38%, transparent 64%);
-  filter: blur(10px);
-}
-
-.glow-ring {
-  position: absolute;
-  left: 8%;
-  right: 8%;
-  bottom: 10px;
-  height: 190px;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 50% 50%, rgba(101, 228, 255, 0.18) 0 40%, transparent 60%),
-    linear-gradient(180deg, rgba(77, 184, 255, 0.18), rgba(77, 184, 255, 0.02));
-  box-shadow:
-    inset 0 0 40px rgba(123, 238, 255, 0.45),
-    0 0 60px rgba(57, 181, 255, 0.2);
-  transform: perspective(400px) rotateX(70deg);
-}
-
-.alarm-table {
-  height: 100%;
-  min-height: 0;
-  background: transparent;
-  color: #eaf4ff;
-}
-
-.status-tag {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 54px;
-  padding: 4px 8px;
-  border-radius: 4px;
-  background: rgba(235, 164, 39, 0.2);
-  color: #ffbf52;
-  font-size: 12px;
-}
-
-:deep(.alarm-table.el-table) {
-  --el-table-tr-bg-color: transparent;
-  --el-table-row-hover-bg-color: rgba(86, 168, 255, 0.08);
-  --el-table-header-bg-color: rgba(83, 129, 198, 0.16);
-  --el-table-border-color: rgba(115, 182, 255, 0.12);
-  --el-table-text-color: #dfeeff;
-  --el-table-header-text-color: #f4f8ff;
-  --el-fill-color-lighter: transparent;
-}
-
-:deep(.alarm-table .el-table__inner-wrapper::before) {
-  display: none;
-}
-
-:deep(.progress-row .el-progress-bar__outer) {
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.hex-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  padding: 26px 18px 20px;
-}
-
-.hex-card {
-  display: flex;
-  justify-content: center;
-
-  &__inner {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 108px;
-    height: 120px;
-    clip-path: polygon(25% 7%, 75% 7%, 100% 50%, 75% 93%, 25% 93%, 0 50%);
-    background: linear-gradient(180deg, rgba(19, 72, 126, 0.9), rgba(11, 34, 68, 0.9));
-    box-shadow:
-      inset 0 0 0 1px rgba(85, 173, 255, 0.2),
-      0 10px 24px rgba(3, 12, 31, 0.32);
-
-    strong {
-      font-size: 22px;
-      color: #37a3ff;
-    }
-
-    span {
-      font-size: 13px;
-      color: #5db5ff;
-    }
-
-    small {
-      margin-top: 8px;
-      color: #8faed0;
-      font-size: 14px;
-    }
-  }
-}
-
-.saving-panel {
-  display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
-  align-items: center;
-  gap: 8px;
-  height: 100%;
-  min-height: 0;
-  padding: 8px 10px 14px;
-}
-
-.saving-chart {
-  height: 100%;
-  min-height: 0;
-}
-
-.saving-data {
-  display: grid;
-  gap: 18px;
-  align-content: center;
-
-  label {
-    display: block;
-    margin-bottom: 6px;
-    color: $color-text-secondary;
-    font-size: 14px;
-  }
-
-  strong {
-    color: #3bb2ff;
-    font-size: 26px;
-    font-weight: 700;
+  &__main--stacked {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    gap: 18px;
+    padding-inline: 24px;
+    padding-bottom: 24px;
+    overflow-y: auto;
   }
 }
 
@@ -481,28 +145,6 @@ onBeforeUnmount(() => {
   .screen-page__main {
     grid-template-columns: 1fr;
     overflow-y: auto;
-  }
-
-  .side-column,
-  .center-column {
-    grid-template-rows: none;
-  }
-
-  .center-glow {
-    min-height: 320px;
-  }
-}
-
-@media (max-width: 900px) {
-  .stat-grid,
-  .share-grid,
-  .hex-grid,
-  .saving-panel {
-    grid-template-columns: 1fr;
-  }
-
-  .progress-row {
-    grid-template-columns: 1fr;
   }
 }
 </style>
