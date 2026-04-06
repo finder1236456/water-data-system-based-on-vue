@@ -7,7 +7,18 @@ router.post('/login', async (req, res, next) => {
   try {
     const { username, password } = req.body
     const [rows] = await pool.execute(
-      'SELECT id, username, password, name, role FROM users WHERE username = ? LIMIT 1',
+      `
+        SELECT
+          users.id,
+          users.username,
+          users.password,
+          users.name,
+          roles.code AS role
+        FROM users
+        INNER JOIN roles ON roles.id = users.role_id
+        WHERE users.username = ?
+        LIMIT 1
+      `,
       [username],
     )
 

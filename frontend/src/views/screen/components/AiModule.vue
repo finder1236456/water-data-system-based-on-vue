@@ -1,6 +1,81 @@
 <script setup lang="ts">
+import { computed, ref, watch } from 'vue'
+import { ElMessage } from 'element-plus'
+import { chatWithAi } from '@/api'
 import ScreenPanel from './ScreenPanel.vue'
-import { aiSuggestions } from '../data'
+import type { AiSuggestion } from '../data'
+
+type ChatMessage = {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+const props = defineProps<{
+  initialSuggestions: AiSuggestion[]
+  promptSuggestions: string[]
+}>()
+
+const loading = ref(false)
+const prompt = ref('')
+const messages = ref<ChatMessage[]>([])
+
+watch(
+  () => props.initialSuggestions,
+  (value) => {
+    messages.value = value.flatMap((item) => [
+      { role: 'user' as const, content: item.question },
+      { role: 'assistant' as const, content: item.answer },
+    ])
+  },
+  { immediate: true },
+)
+
+const askCount = computed(() => messages.value.filter((item) => item.role === 'user').length)
+const assistantCount = computed(() => messages.value.filter((item) => item.role === 'assistant').length)
+
+const latestTopic = computed(() => {
+  const latestUserQuestion = [...messages.value].reverse().find((item) => item.role === 'user')
+  return latestUserQuestion?.content || '节水建议'
+})
+
+const fillPrompt = (text: string) => {
+  prompt.value = text
+}
+
+const handleSend = async () => {
+  const content = prompt.value.trim()
+  if (!content || loading.value) {
+    return
+  }
+
+  messages.value.push({ role: 'user', content })
+  prompt.value = ''
+  loading.value = true
+
+  try {
+    const history = messages.value
+      .slice(0, -1)
+      .map((item) => ({ role: item.role, content: item.content }))
+
+    const response = await chatWithAi({
+      message: content,
+      history,
+    })
+
+    messages.value.push({
+      role: 'assistant',
+      content: response.content,
+    })
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : 'AI 服务调用失败')
+    messages.value.push({
+      role: 'assistant',
+      content: '当前 AI 服务暂时不可用，请稍后再试。',
+    })
+  } finally {
+    loading.value = false
+  }
+}
 </script>
 
 <template>
@@ -10,22 +85,27 @@ import { aiSuggestions } from '../data'
         <div class="ai-summary">
           <div class="summary-card">
             <span>今日咨询量</span>
-            <strong>86 次</strong>
+            <strong>{{ askCount }} 次</strong>
           </div>
           <div class="summary-card">
             <span>热点主题</span>
-            <strong>节水建议</strong>
+            <strong>{{ latestTopic }}</strong>
           </div>
           <div class="summary-card">
-            <span>平均响应时间</span>
-            <strong>1.2 秒</strong>
+            <span>累计回复数</span>
+            <strong>{{ assistantCount }} 条</strong>
           </div>
         </div>
 
         <div class="ai-chat">
-          <div v-for="item in aiSuggestions" :key="item.question" class="chat-card">
-            <div class="chat-card__question">Q：{{ item.question }}</div>
-            <div class="chat-card__answer">A：{{ item.answer }}</div>
+          <div
+            v-for="(item, index) in messages"
+            :key="`${item.role}-${index}`"
+            class="chat-card"
+            :class="{ 'chat-card--assistant': item.role === 'assistant' }"
+          >
+            <div class="chat-card__question">{{ item.role === 'user' ? 'Q' : 'A' }}</div>
+            <div class="chat-card__answer">{{ item.content }}</div>
           </div>
         </div>
 
@@ -36,18 +116,25 @@ import { aiSuggestions } from '../data'
           </div>
 
           <div class="prompt-list">
-            <button type="button" class="prompt-chip">宿舍区夜间用水为什么偏高？</button>
-            <button type="button" class="prompt-chip">如何快速排查设备离线？</button>
-            <button type="button" class="prompt-chip">有没有更合适的节水措施？</button>
+            <button
+              v-for="item in promptSuggestions"
+              :key="item"
+              type="button"
+              class="prompt-chip"
+              @click="fillPrompt(item)"
+            >
+              {{ item }}
+            </button>
           </div>
 
           <div class="ai-input-box">
             <el-input
+              v-model="prompt"
               type="textarea"
               :rows="7"
-              placeholder="请输入水务问题，例如：用水偏高原因、节水建议、设备故障排查等"
+              placeholder="请输入水务问题，例如：某栋某单元夜间用水偏高、节水建议、设备故障排查等"
             />
-            <el-button type="primary">发送咨询</el-button>
+            <el-button type="primary" :loading="loading" @click="handleSend">发送咨询</el-button>
           </div>
         </div>
       </div>
@@ -101,7 +188,7 @@ import { aiSuggestions } from '../data'
 
   strong {
     color: #fff;
-    font-size: 30px;
+    font-size: clamp(20px, 2vw, 30px);
     font-weight: 700;
   }
 }
@@ -110,22 +197,37 @@ import { aiSuggestions } from '../data'
   display: grid;
   grid-column: span 7;
   gap: 16px;
+  align-content: start;
 }
 
 .chat-card {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 16px;
   padding: 22px;
 
+  &--assistant .chat-card__question {
+    background: rgba(79, 194, 149, 0.18);
+    color: #91f0c7;
+  }
+
   &__question {
-    margin-bottom: 12px;
-    color: #f4fbff;
-    font-size: 20px;
-    font-weight: 600;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(71, 156, 255, 0.18);
+    color: #9fd8ff;
+    font-size: 18px;
+    font-weight: 700;
   }
 
   &__answer {
     color: $color-text-secondary;
     line-height: 1.8;
     font-size: 16px;
+    word-break: break-word;
   }
 }
 
@@ -182,14 +284,24 @@ import { aiSuggestions } from '../data'
     grid-column: auto;
   }
 
-  .ai-layout,
+  .ai-layout {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .ai-summary {
-    grid-template-columns: 1fr;
+    grid-column: 1 / -1;
   }
 
   .ai-chat,
   .ai-input-card {
     grid-column: auto;
+  }
+}
+
+@media (max-width: 980px) {
+  .ai-layout,
+  .ai-summary {
+    grid-template-columns: 1fr;
   }
 }
 </style>

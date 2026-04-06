@@ -1,8 +1,10 @@
 import cors from 'cors'
 import dotenv from 'dotenv'
 import express from 'express'
-import authRouter from './routes/auth.js'
 import adminRouter from './routes/admin.js'
+import aiRouter from './routes/ai.js'
+import authRouter from './routes/auth.js'
+import dashboardRouter from './routes/dashboard.js'
 
 dotenv.config()
 
@@ -17,11 +19,16 @@ app.get('/api/health', (_req, res) => {
 
 app.use('/api/auth', authRouter)
 app.use('/api/admin', adminRouter)
+app.use('/api/ai', aiRouter)
+app.use('/api/dashboard', dashboardRouter)
 
 app.use((error, _req, res, _next) => {
   console.error(error)
   res.status(500).json({
-    message: error?.code === 'ER_DUP_ENTRY' ? '账号已存在，请更换后重试。' : '服务器内部错误，请稍后重试。',
+    message:
+      error?.code === 'ER_DUP_ENTRY'
+        ? '账号已存在，请更换后重试。'
+        : '服务器内部错误，请稍后重试。',
   })
 })
 

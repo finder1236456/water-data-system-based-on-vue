@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { ElMessage } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
+import { getScreenData } from '@/api'
 import { useUserStore } from '@/stores/user'
 import ScreenHeader from './components/ScreenHeader.vue'
 import AnalysisModule from './components/AnalysisModule.vue'
 import QuotaModule from './components/QuotaModule.vue'
 import RepairModule from './components/RepairModule.vue'
 import AiModule from './components/AiModule.vue'
-import { moduleNav } from './data'
+import { defaultScreenData, moduleNav, type ScreenData } from './data'
 
 const route = useRoute()
 const router = useRouter()
@@ -15,6 +17,7 @@ const userStore = useUserStore()
 
 const now = ref(new Date())
 const activeModule = ref('analysis')
+const screenData = ref<ScreenData>(defaultScreenData)
 let timer: number | undefined
 
 const isAnalysisModule = computed(() => activeModule.value === 'analysis')
@@ -53,10 +56,34 @@ const handleLogout = async () => {
   await router.push('/login')
 }
 
-onMounted(() => {
+const loadScreenData = async () => {
+  try {
+    screenData.value = await getScreenData()
+  } catch (error) {
+    ElMessage.warning(error instanceof Error ? error.message : '大屏数据加载失败，已切换为本地示例数据。')
+    screenData.value = defaultScreenData
+  }
+}
+
+watch(
+  () => route.query.module,
+  (value) => {
+    if (typeof value === 'string' && moduleNav.some((item) => item.key === value)) {
+      activeModule.value = value
+      return
+    }
+
+    activeModule.value = 'analysis'
+  },
+  { immediate: true },
+)
+
+onMounted(async () => {
   timer = window.setInterval(() => {
     now.value = new Date()
   }, 1000)
+
+  await loadScreenData()
 })
 
 onBeforeUnmount(() => {
@@ -81,10 +108,31 @@ onBeforeUnmount(() => {
       />
 
       <main class="screen-page__main" :class="{ 'screen-page__main--stacked': !isAnalysisModule }">
-        <AnalysisModule v-if="activeModule === 'analysis'" />
-        <QuotaModule v-else-if="activeModule === 'quota'" />
-        <RepairModule v-else-if="activeModule === 'repair'" />
-        <AiModule v-else />
+        <AnalysisModule
+          v-if="activeModule === 'analysis'"
+          :water-stats="screenData.waterStats"
+          :usage-share="screenData.usageShare"
+          :progress-list="screenData.progressList"
+          :history-cards="screenData.historyCards"
+          :line-trend="screenData.lineTrend"
+          :bar-trend="screenData.barTrend"
+          :saving-metrics="screenData.savingMetrics"
+        />
+        <QuotaModule
+          v-else-if="activeModule === 'quota'"
+          :quota-list="screenData.quotaList"
+          :saving-suggestions="screenData.savingSuggestions"
+        />
+        <RepairModule
+          v-else-if="activeModule === 'repair'"
+          :repair-channels="screenData.repairChannels"
+          :repair-tickets="screenData.repairTickets"
+        />
+        <AiModule
+          v-else
+          :initial-suggestions="screenData.aiSuggestions"
+          :prompt-suggestions="screenData.aiPromptSuggestions"
+        />
       </main>
     </div>
   </div>
@@ -93,8 +141,8 @@ onBeforeUnmount(() => {
 <style lang="scss" scoped>
 .screen-page {
   position: relative;
-  height: 100%;
-  overflow: hidden;
+  min-height: 100%;
+  overflow-x: hidden;
   color: $color-text-primary;
   background:
     radial-gradient(circle at 50% 82%, rgba(62, 224, 255, 0.35), transparent 18%),
@@ -119,15 +167,18 @@ onBeforeUnmount(() => {
   &__content {
     position: relative;
     z-index: 1;
-    height: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
   }
 
   &__main {
+    flex: 1;
     display: grid;
-    grid-template-columns: 404px minmax(520px, 1fr) 404px;
+    grid-template-columns: minmax(0, 360px) minmax(0, 1fr) minmax(0, 360px);
+    align-items: stretch;
     gap: $screen-gap;
     padding: 12px 18px 18px;
-    height: calc(100% - $header-height);
     min-height: 0;
   }
 
@@ -135,16 +186,29 @@ onBeforeUnmount(() => {
     grid-template-columns: minmax(0, 1fr);
     align-content: start;
     gap: 18px;
-    padding-inline: 24px;
+    padding-inline: clamp(16px, 2.5vw, 24px);
     padding-bottom: 24px;
     overflow-y: auto;
   }
 }
 
-@media (max-width: 1600px) {
+@media (max-width: 1440px) {
   .screen-page__main {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    padding-inline: 16px;
     overflow-y: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .screen-page__content {
+    min-height: 100svh;
+  }
+
+  .screen-page__main,
+  .screen-page__main--stacked {
+    padding-inline: 12px;
+    padding-bottom: 16px;
   }
 }
 </style>

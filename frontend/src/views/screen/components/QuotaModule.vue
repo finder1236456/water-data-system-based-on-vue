@@ -1,24 +1,29 @@
 <script setup lang="ts">
 import ScreenPanel from './ScreenPanel.vue'
-import { quotaList, savingSuggestions } from '../data'
+import type { QuotaItem } from '../data'
+
+defineProps<{
+  quotaList: QuotaItem[]
+  savingSuggestions: string[]
+}>()
 </script>
 
 <template>
   <section class="wide-column">
-    <ScreenPanel title="用水定额与超额监测" unit="按区域统计">
+    <ScreenPanel title="用水定额与超额监测" unit="按楼栋单元统计">
       <div class="quota-layout">
         <div class="quota-summary">
           <div class="summary-card">
-            <span>当前监测区域</span>
+            <span>当前监测单元</span>
             <strong>{{ quotaList.length }} 个</strong>
           </div>
           <div class="summary-card">
             <span>超额预警</span>
-            <strong>1 个区域</strong>
+            <strong>{{ quotaList.filter((item) => item.status.includes('超额')).length }} 个单元</strong>
           </div>
           <div class="summary-card">
-            <span>建议关注</span>
-            <strong>1栋</strong>
+            <span>建议重点关注</span>
+            <strong>{{ quotaList.find((item) => item.status.includes('预警'))?.area || '暂无' }}</strong>
           </div>
         </div>
 
@@ -43,7 +48,7 @@ import { quotaList, savingSuggestions } from '../data'
 
         <div class="quota-table-wrap">
           <el-table :data="quotaList" class="common-table" height="100%">
-            <el-table-column prop="area" label="区域" min-width="180" />
+            <el-table-column prop="area" label="楼栋单元" min-width="180" />
             <el-table-column prop="current" label="当前用水" min-width="140" />
             <el-table-column prop="quota" label="定额标准" min-width="140" />
             <el-table-column prop="status" label="监测结果" min-width="140" />
@@ -105,7 +110,7 @@ import { quotaList, savingSuggestions } from '../data'
 
   strong {
     color: #fff;
-    font-size: 30px;
+    font-size: clamp(22px, 2vw, 30px);
     font-weight: 700;
   }
 }
@@ -129,6 +134,7 @@ import { quotaList, savingSuggestions } from '../data'
     justify-content: space-between;
     gap: 16px;
     margin-bottom: 18px;
+    flex-wrap: wrap;
   }
 
   &__metrics {
@@ -193,7 +199,7 @@ import { quotaList, savingSuggestions } from '../data'
 }
 
 .common-table {
-  height: 360px;
+  height: 420px;
   background: transparent;
 }
 
@@ -216,16 +222,27 @@ import { quotaList, savingSuggestions } from '../data'
     grid-column: auto;
   }
 
-  .quota-layout,
+  .quota-layout {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .quota-summary,
-  .suggestion-list,
-  .quota-card__metrics {
-    grid-template-columns: 1fr;
+  .suggestion-list {
+    grid-column: 1 / -1;
   }
 
   .quota-cards,
   .quota-table-wrap {
     grid-column: auto;
+  }
+}
+
+@media (max-width: 980px) {
+  .quota-layout,
+  .quota-summary,
+  .suggestion-list,
+  .quota-card__metrics {
+    grid-template-columns: 1fr;
   }
 }
 </style>

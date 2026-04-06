@@ -1,26 +1,26 @@
 import type { EChartsOption } from 'echarts'
-import type { UsageItem } from './data'
+import type { MonthlyComparisonItem, MonthlyTrendItem, UsageItem } from './data'
 
-export const createLineOption = (): EChartsOption => ({
+export const createLineOption = (trendData: MonthlyTrendItem[]): EChartsOption => ({
   grid: { left: 32, right: 20, top: 36, bottom: 28 },
   tooltip: { trigger: 'axis' },
   xAxis: {
     type: 'category',
     boundaryGap: false,
-    data: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+    data: trendData.map((item) => item.month),
     axisLine: { lineStyle: { color: 'rgba(164, 202, 255, 0.45)' } },
     axisLabel: { color: '#b8d7ff' },
   },
   yAxis: {
     type: 'value',
-    name: '单位: 万吨',
+    name: '单位：万吨',
     nameTextStyle: { color: '#7fa8d9', padding: [0, 0, 0, -8] },
     splitLine: { lineStyle: { color: 'rgba(130, 180, 255, 0.16)' } },
     axisLabel: { color: '#9fc3f3' },
   },
   series: [
     {
-      data: [28, 22, 31, 44, 52, 29, 46, 33, 54, 71, 61, 58],
+      data: trendData.map((item) => item.value),
       type: 'line',
       smooth: true,
       symbol: 'circle',
@@ -44,7 +44,7 @@ export const createLineOption = (): EChartsOption => ({
   ],
 })
 
-export const createBarOption = (): EChartsOption => ({
+export const createBarOption = (comparisonData: MonthlyComparisonItem[]): EChartsOption => ({
   grid: { left: 36, right: 20, top: 38, bottom: 24 },
   tooltip: { trigger: 'axis' },
   legend: {
@@ -56,7 +56,7 @@ export const createBarOption = (): EChartsOption => ({
   },
   xAxis: {
     type: 'category',
-    data: ['2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月'],
+    data: comparisonData.map((item) => item.month),
     axisLabel: { color: '#b5d6ff' },
     axisLine: { lineStyle: { color: 'rgba(160, 210, 255, 0.35)' } },
   },
@@ -70,7 +70,7 @@ export const createBarOption = (): EChartsOption => ({
       name: '去年同期',
       type: 'bar',
       barWidth: 14,
-      data: [38, 46, 58, 74, 50, 68, 70, 52, 79],
+      data: comparisonData.map((item) => item.lastYear),
       itemStyle: {
         color: '#f2f5fb',
         borderRadius: [6, 6, 0, 0],
@@ -80,7 +80,7 @@ export const createBarOption = (): EChartsOption => ({
       name: '本期',
       type: 'bar',
       barWidth: 14,
-      data: [22, 32, 44, 52, 26, 46, 33, 55, 68],
+      data: comparisonData.map((item) => item.current),
       itemStyle: {
         color: '#7bd23c',
         borderRadius: [6, 6, 0, 0],
@@ -89,7 +89,7 @@ export const createBarOption = (): EChartsOption => ({
   ],
 })
 
-export const createSavingOption = (): EChartsOption => ({
+export const createSavingOption = (value: number): EChartsOption => ({
   tooltip: { formatter: '{c}%' },
   series: [
     {
@@ -128,7 +128,7 @@ export const createSavingOption = (): EChartsOption => ({
         fontSize: 22,
         formatter: '{value}%',
       },
-      data: [{ value: 2 }],
+      data: [{ value }],
     },
   ],
 })
@@ -172,7 +172,7 @@ export const createDonutOption = (item: UsageItem): EChartsOption => ({
         },
         {
           value: 100 - item.value,
-          name: '其余占比',
+          name: '其他占比',
           itemStyle: { color: 'rgba(255,255,255,0.2)' },
         },
       ],

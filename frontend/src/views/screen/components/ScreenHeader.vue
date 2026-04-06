@@ -56,10 +56,10 @@ const emit = defineEmits<{
 <style lang="scss" scoped>
 .screen-header {
   display: grid;
-  grid-template-columns: minmax(220px, 320px) minmax(540px, 1fr) minmax(320px, 380px);
+  grid-template-columns: minmax(220px, 300px) minmax(0, 1fr) minmax(260px, 360px);
   align-items: center;
-  gap: 28px;
-  padding: 22px 32px 10px;
+  gap: 20px;
+  padding: 18px clamp(14px, 2vw, 32px) 10px;
 
   &__brand-wrap {
     display: flex;
@@ -69,7 +69,7 @@ const emit = defineEmits<{
   }
 
   &__brand {
-    font-size: 62px;
+    font-size: clamp(42px, 5vw, 62px);
     letter-spacing: 4px;
     color: $color-brand;
     text-shadow: 0 0 12px rgba(90, 220, 255, 0.28);
@@ -89,25 +89,26 @@ const emit = defineEmits<{
   &__nav {
     display: flex;
     justify-content: center;
-    gap: 16px;
+    gap: 12px;
     min-width: 0;
+    flex-wrap: wrap;
   }
 
   &__tools {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 14px;
+    gap: 12px;
   }
 }
 
 .nav-chip {
-  min-width: 132px;
-  padding: 14px 22px;
+  min-width: 120px;
+  padding: 12px 18px;
   border: 1px solid rgba(105, 188, 226, 0.28);
   background: linear-gradient(90deg, rgba(33, 70, 110, 0.78), rgba(49, 113, 146, 0.36));
   color: #d8f4ff;
-  font-size: 18px;
+  font-size: clamp(14px, 1.2vw, 18px);
   font-weight: 600;
   clip-path: polygon(9% 0, 100% 0, 91% 100%, 0 100%);
   cursor: pointer;
@@ -131,16 +132,16 @@ const emit = defineEmits<{
 .clock-box {
   display: flex;
   align-items: center;
-  gap: 20px;
-  min-width: 332px;
-  padding: 14px 24px;
+  gap: 18px;
+  min-width: 0;
+  padding: 12px 18px;
   background: linear-gradient(90deg, rgba(24, 136, 190, 0.92), rgba(15, 57, 93, 0.95));
   clip-path: polygon(6% 0, 100% 0, 94% 100%, 0 100%);
   box-shadow: 0 12px 28px rgba(11, 42, 68, 0.35);
 }
 
 .clock {
-  font-size: 34px;
+  font-size: clamp(24px, 2.4vw, 34px);
   font-weight: 700;
 }
 
@@ -178,15 +179,46 @@ const emit = defineEmits<{
   cursor: pointer;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1440px) {
   .screen-header {
     grid-template-columns: 1fr;
-    justify-items: center;
-    gap: 18px;
+    justify-items: stretch;
+    gap: 14px;
+  }
+
+  .screen-header__brand-wrap,
+  .screen-header__tools {
+    justify-content: space-between;
   }
 
   .screen-header__nav {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 768px) {
+  .screen-header {
+    padding-inline: 12px;
+  }
+
+  .screen-header__brand-wrap,
+  .screen-header__tools {
     flex-wrap: wrap;
+  }
+
+  .clock-box {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .nav-chip {
+    min-width: calc(50% - 6px);
+  }
+}
+
+@media (max-width: 520px) {
+  .nav-chip {
+    min-width: 100%;
   }
 }
 </style>

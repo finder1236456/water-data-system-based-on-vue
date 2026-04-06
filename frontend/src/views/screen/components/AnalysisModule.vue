@@ -2,12 +2,30 @@
 import { computed } from 'vue'
 import BaseChart from '@/components/BaseChart.vue'
 import ScreenPanel from './ScreenPanel.vue'
-import { historyCards, progressList, usageShare, waterStats } from '../data'
+import type {
+  HistoryCard,
+  MonthlyComparisonItem,
+  MonthlyTrendItem,
+  ProgressItem,
+  SavingMetrics,
+  UsageItem,
+  WaterStat,
+} from '../data'
 import { createBarOption, createDonutOption, createLineOption, createSavingOption } from '../chart-options'
 
-const lineOption = computed(() => createLineOption())
-const barOption = computed(() => createBarOption())
-const savingOption = computed(() => createSavingOption())
+const props = defineProps<{
+  waterStats: WaterStat[]
+  usageShare: UsageItem[]
+  progressList: ProgressItem[]
+  historyCards: HistoryCard[]
+  lineTrend: MonthlyTrendItem[]
+  barTrend: MonthlyComparisonItem[]
+  savingMetrics: SavingMetrics
+}>()
+
+const lineOption = computed(() => createLineOption(props.lineTrend))
+const barOption = computed(() => createBarOption(props.barTrend))
+const savingOption = computed(() => createSavingOption(props.savingMetrics.ratio))
 </script>
 
 <template>
@@ -36,7 +54,7 @@ const savingOption = computed(() => createSavingOption())
       </div>
     </ScreenPanel>
 
-    <ScreenPanel title="区域用水占比分析" unit="单位：m³">
+    <ScreenPanel title="楼栋用水占比分析" unit="单位：m³">
       <div class="share-block">
         <div class="share-grid">
           <div v-for="item in usageShare" :key="item.name" class="share-item">
@@ -58,8 +76,8 @@ const savingOption = computed(() => createSavingOption())
             :stroke-width="12"
           />
           <span>{{ item.value }}/{{ item.total }}</span>
-          </div>
         </div>
+      </div>
     </ScreenPanel>
 
     <ScreenPanel title="用水规律统计" unit="单位：万吨">
@@ -79,11 +97,11 @@ const savingOption = computed(() => createSavingOption())
       <div class="report-box">
         <div class="report-card">
           <strong>本月综合结论</strong>
-          <p>整体用水趋势平稳，教学区与宿舍区在夜间存在轻微异常波动，建议结合分时监测继续跟踪。</p>
+          <p>整体用水趋势平稳，1栋与3栋在夜间存在轻微异常波动，建议结合分时监测继续跟踪。</p>
         </div>
         <div class="report-card">
-          <strong>区域关注点</strong>
-          <p>一教片区与宿舍北区建议作为重点巡检对象，优先核查基流、阀件与漏损情况。</p>
+          <strong>重点关注楼栋</strong>
+          <p>建议将 1栋1单元、3栋1单元 和 5栋1单元作为重点巡检对象，优先核查基流、阀件与漏损情况。</p>
         </div>
       </div>
     </ScreenPanel>
@@ -102,7 +120,7 @@ const savingOption = computed(() => createSavingOption())
       </div>
     </ScreenPanel>
 
-    <ScreenPanel title="节水比" unit="单位：万吨">
+    <ScreenPanel title="节水比" unit="单位：m³">
       <div class="saving-panel">
         <div class="saving-chart">
           <BaseChart :option="savingOption" />
@@ -110,21 +128,21 @@ const savingOption = computed(() => createSavingOption())
         <div class="saving-data">
           <div>
             <label>月基准水量</label>
-            <strong>4000 m³</strong>
+            <strong>{{ savingMetrics.baseline }} m³</strong>
           </div>
           <div>
             <label>上月用水量</label>
-            <strong>3900 m³</strong>
+            <strong>{{ savingMetrics.lastUsage }} m³</strong>
           </div>
           <div>
             <label>上月节水量</label>
-            <strong>100 m³</strong>
+            <strong>{{ savingMetrics.saving }} m³</strong>
           </div>
         </div>
       </div>
     </ScreenPanel>
 
-    <ScreenPanel title="同比分析图" unit="单位：万吨">
+    <ScreenPanel title="年度用水同比分析图" unit="单位：万吨">
       <div class="chart-box">
         <BaseChart :option="barOption" />
       </div>
@@ -138,6 +156,7 @@ const savingOption = computed(() => createSavingOption())
   display: grid;
   gap: $screen-gap;
   min-height: 0;
+  min-width: 0;
 }
 
 .side-column {
@@ -145,13 +164,13 @@ const savingOption = computed(() => createSavingOption())
 }
 
 .center-column {
-  grid-template-rows: minmax(0, 1fr) 220px;
+  grid-template-rows: minmax(300px, 1fr) 220px;
 }
 
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px 12px;
+  gap: 10px 12px;
   padding: 18px 14px 16px;
 }
 
@@ -159,6 +178,7 @@ const savingOption = computed(() => createSavingOption())
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
 
   &__ring {
     position: relative;
@@ -196,10 +216,13 @@ const savingOption = computed(() => createSavingOption())
   }
 
   &__info {
+    min-width: 0;
+
     h4 {
       margin: 0 0 6px;
       font-size: 16px;
       color: #ddecff;
+      word-break: break-word;
     }
 
     p {
@@ -207,6 +230,7 @@ const savingOption = computed(() => createSavingOption())
       font-size: 18px;
       font-weight: 700;
       color: #ffffff;
+      word-break: break-word;
     }
   }
 }
@@ -217,7 +241,7 @@ const savingOption = computed(() => createSavingOption())
 
 .share-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
 }
 
@@ -228,8 +252,9 @@ const savingOption = computed(() => createSavingOption())
 }
 
 .share-chart {
+  width: min(120px, 100%);
   height: 120px;
-  width: 120px;
+  margin: 0 auto;
 }
 
 .progress-list {
@@ -240,7 +265,7 @@ const savingOption = computed(() => createSavingOption())
 
 .progress-row {
   display: grid;
-  grid-template-columns: 84px minmax(0, 1fr) 100px;
+  grid-template-columns: minmax(84px, 112px) minmax(0, 1fr) minmax(80px, 100px);
   gap: 12px;
   align-items: center;
   color: #b6d7ff;
@@ -249,12 +274,12 @@ const savingOption = computed(() => createSavingOption())
 
 .chart-box {
   height: 100%;
-  min-height: 0;
+  min-height: 260px;
 }
 
 .center-glow {
   position: relative;
-  min-height: 0;
+  min-height: 300px;
   overflow: hidden;
   border-radius: $screen-radius;
 }
@@ -286,7 +311,7 @@ const savingOption = computed(() => createSavingOption())
 
 .report-box {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
   padding: 18px;
   height: 100%;
@@ -314,7 +339,7 @@ const savingOption = computed(() => createSavingOption())
 
 .hex-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
   padding: 26px 18px 20px;
 }
@@ -328,7 +353,7 @@ const savingOption = computed(() => createSavingOption())
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 108px;
+    width: min(108px, 100%);
     height: 120px;
     clip-path: polygon(25% 7%, 75% 7%, 100% 50%, 75% 93%, 25% 93%, 0 50%);
     background: linear-gradient(180deg, rgba(19, 72, 126, 0.9), rgba(11, 34, 68, 0.9));
@@ -356,7 +381,7 @@ const savingOption = computed(() => createSavingOption())
 
 .saving-panel {
   display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
+  grid-template-columns: minmax(220px, 1.1fr) minmax(180px, 0.9fr);
   align-items: center;
   gap: 8px;
   height: 100%;
@@ -366,7 +391,7 @@ const savingOption = computed(() => createSavingOption())
 
 .saving-chart {
   height: 100%;
-  min-height: 0;
+  min-height: 200px;
 }
 
 .saving-data {
@@ -385,6 +410,7 @@ const savingOption = computed(() => createSavingOption())
     color: #3bb2ff;
     font-size: 26px;
     font-weight: 700;
+    word-break: break-word;
   }
 }
 
@@ -392,18 +418,18 @@ const savingOption = computed(() => createSavingOption())
   background: rgba(255, 255, 255, 0.12);
 }
 
-@media (max-width: 1600px) {
+@media (max-width: 1440px) {
   .side-column,
   .center-column {
     grid-template-rows: none;
   }
 
-  .center-glow {
-    min-height: 320px;
-  }
-
   .report-box {
     grid-template-columns: 1fr;
+  }
+
+  .share-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
@@ -416,7 +442,11 @@ const savingOption = computed(() => createSavingOption())
   }
 
   .progress-row {
-    grid-template-columns: 84px 240px 92px;
+    grid-template-columns: 1fr;
+  }
+
+  .progress-row span:last-child {
+    justify-self: end;
   }
 }
 </style>

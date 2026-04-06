@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import ScreenPanel from './ScreenPanel.vue'
-import { repairChannels, repairTickets } from '../data'
+import type { RepairChannel, RepairItem } from '../data'
+
+defineProps<{
+  repairChannels: RepairChannel[]
+  repairTickets: RepairItem[]
+}>()
 </script>
 
 <template>
@@ -10,15 +15,24 @@ import { repairChannels, repairTickets } from '../data'
         <div class="repair-summary">
           <div class="summary-card">
             <span>待处理工单</span>
-            <strong>12</strong>
+            <strong>{{ repairTickets.filter((item) => item.status.includes('待')).length }}</strong>
           </div>
           <div class="summary-card">
             <span>处理中工单</span>
-            <strong>5</strong>
+            <strong>{{ repairTickets.filter((item) => item.status.includes('处理')).length }}</strong>
           </div>
           <div class="summary-card">
             <span>移动端上报占比</span>
-            <strong>42%</strong>
+            <strong>
+              {{
+                repairTickets.length
+                  ? Math.round(
+                      (repairTickets.filter((item) => item.channel === 'UniApp').length / repairTickets.length) *
+                        100,
+                    )
+                  : 0
+              }}%
+            </strong>
           </div>
         </div>
 
@@ -35,13 +49,13 @@ import { repairChannels, repairTickets } from '../data'
         <div class="repair-form-card">
           <div class="repair-form-card__header">
             <strong>在线报修表单</strong>
-            <span>支持文字描述与现场图片上传</span>
+            <span>支持文字描述、现场图片上传和楼栋单元快速定位</span>
           </div>
 
           <el-form label-position="top" class="repair-form">
             <div class="repair-form__grid">
               <el-form-item label="故障位置">
-                <el-input placeholder="例如：教学楼 A 区 3F 配电间" />
+                <el-input placeholder="例如：2栋1单元 1202 室水表井旁" />
               </el-form-item>
               <el-form-item label="故障类型">
                 <el-select placeholder="请选择故障类型">
@@ -56,7 +70,7 @@ import { repairChannels, repairTickets } from '../data'
               <el-input
                 type="textarea"
                 :rows="5"
-                placeholder="请输入故障现象、影响范围、发生时间等关键信息"
+                placeholder="请输入故障现象、影响住户、发现时间等关键信息"
               />
             </el-form-item>
 
@@ -78,7 +92,7 @@ import { repairChannels, repairTickets } from '../data'
         <el-table :data="repairTickets" class="common-table" height="100%">
           <el-table-column prop="id" label="工单号" min-width="150" />
           <el-table-column prop="title" label="故障类型" min-width="120" />
-          <el-table-column prop="location" label="位置" min-width="140" />
+          <el-table-column prop="location" label="位置" min-width="180" />
           <el-table-column prop="channel" label="上报渠道" min-width="100" />
           <el-table-column prop="status" label="状态" min-width="100" />
         </el-table>
@@ -133,7 +147,7 @@ import { repairChannels, repairTickets } from '../data'
 
   strong {
     color: #fff;
-    font-size: 30px;
+    font-size: clamp(22px, 2vw, 30px);
     font-weight: 700;
   }
 }
@@ -153,6 +167,7 @@ import { repairChannels, repairTickets } from '../data'
     justify-content: space-between;
     gap: 16px;
     margin-bottom: 14px;
+    flex-wrap: wrap;
   }
 
   strong {
@@ -252,15 +267,25 @@ import { repairChannels, repairTickets } from '../data'
     grid-column: auto;
   }
 
-  .repair-layout,
-  .repair-summary,
-  .repair-form__grid {
-    grid-template-columns: 1fr;
+  .repair-layout {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .repair-summary {
+    grid-column: 1 / -1;
   }
 
   .repair-channel-list,
   .repair-form-card {
     grid-column: auto;
+  }
+}
+
+@media (max-width: 980px) {
+  .repair-layout,
+  .repair-summary,
+  .repair-form__grid {
+    grid-template-columns: 1fr;
   }
 
   .repair-form__actions {
