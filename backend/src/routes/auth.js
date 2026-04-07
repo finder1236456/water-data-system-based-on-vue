@@ -1,3 +1,4 @@
+import jwt from 'jsonwebtoken'
 import { Router } from 'express'
 import { pool } from '../db.js'
 
@@ -28,8 +29,26 @@ router.post('/login', async (req, res, next) => {
       return res.status(401).json({ message: '账号或密码错误，请重新输入。' })
     }
 
+    const secret = process.env.JWT_SECRET
+    if (!secret) {
+      return res.status(500).json({ message: 'JWT 配置缺失，请检查后端环境变量。' })
+    }
+
+    const token = jwt.sign(
+      {
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        name: user.name,
+      },
+      secret,
+      {
+        expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+      },
+    )
+
     res.json({
-      token: `mysql-token-${user.id}-${user.role}`,
+      token,
       user: {
         id: user.id,
         username: user.username,

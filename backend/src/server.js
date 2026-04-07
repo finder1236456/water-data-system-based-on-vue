@@ -3,6 +3,8 @@ import dotenv from 'dotenv'
 import express from 'express'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { authenticateToken } from './middleware/auth.js'
+import { requireRoles } from './middleware/role.js'
 import adminRouter from './routes/admin.js'
 import aiRouter from './routes/ai.js'
 import authRouter from './routes/auth.js'
@@ -25,10 +27,10 @@ app.get('/api/health', (_req, res) => {
 })
 
 app.use('/api/auth', authRouter)
-app.use('/api/admin', adminRouter)
-app.use('/api/ai', aiRouter)
-app.use('/api/dashboard', dashboardRouter)
-app.use('/api/repairs', repairsRouter)
+app.use('/api/admin', authenticateToken, requireRoles('admin'), adminRouter)
+app.use('/api/ai', authenticateToken, aiRouter)
+app.use('/api/dashboard', authenticateToken, dashboardRouter)
+app.use('/api/repairs', authenticateToken, repairsRouter)
 
 app.use((error, _req, res, _next) => {
   console.error(error)

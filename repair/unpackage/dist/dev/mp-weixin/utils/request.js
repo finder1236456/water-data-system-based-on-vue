@@ -1,18 +1,15 @@
 "use strict";
 const common_vendor = require("../common/vendor.js");
 const config_index = require("../config/index.js");
-const utils_auth = require("./auth.js");
 const request = ({ url, method = "GET", data = {} }) => new Promise((resolve, reject) => {
-  const user = utils_auth.getStoredUser();
+  const token = common_vendor.index.getStorageSync("repair_token") || "";
   common_vendor.index.request({
     url: `${config_index.BASE_URL}${url}`,
     method,
     data,
     header: {
       "Content-Type": "application/json",
-      ...utils_auth.getStoredToken() ? { Authorization: `Bearer ${utils_auth.getStoredToken()}` } : {},
-      ...(user == null ? void 0 : user.id) ? { "x-user-id": String(user == null ? void 0 : user.id) } : {},
-      ...(user == null ? void 0 : user.type) ? { "x-user-role": String(user == null ? void 0 : user.type) } : {}
+      ...token ? { Authorization: `Bearer ${token}` } : {}
     },
     success: (res) => {
       var _a;

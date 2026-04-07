@@ -3,6 +3,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { Router } from 'express'
 import { pool } from '../db.js'
+import { requireRoles } from '../middleware/role.js'
 
 const router = Router()
 const __filename = fileURLToPath(import.meta.url)
@@ -12,12 +13,6 @@ const repairsUploadDir = path.resolve(__dirname, '../../uploads/repairs')
 const ensureUploadDir = async () => {
   await fs.mkdir(repairsUploadDir, { recursive: true })
 }
-
-const getActor = (req) => ({
-  id: Number(req.headers['x-user-id'] || 0),
-  role: String(req.headers['x-user-role'] || ''),
-  name: String(req.headers['x-user-name'] || ''),
-})
 
 const saveBase64Image = async (base64, prefix) => {
   if (!base64 || typeof base64 !== 'string') {
@@ -84,7 +79,7 @@ router.get('/regions', async (_req, res, next) => {
 
 router.get('/', async (req, res, next) => {
   try {
-    const actor = getActor(req)
+    const actor = req.user
     const status = String(req.query.status || '').trim()
     const mine = String(req.query.mine || '') === 'true'
 
@@ -235,7 +230,7 @@ router.get('/:id', async (req, res, next) => {
 
 router.post('/', async (req, res, next) => {
   try {
-    const actor = getActor(req)
+    const actor = req.user
     const { title, regionId, location, description, images = [], source = 'UniApp' } = req.body
 
     if (!title || !regionId || !location || !description) {
@@ -280,12 +275,9 @@ router.post('/', async (req, res, next) => {
   }
 })
 
-router.put('/:id/receive', async (req, res, next) => {
+router.put('/:id/receive', requireRoles('repair'), async (req, res, next) => {
   try {
-    const actor = getActor(req)
-    if (actor.role !== 'repair') {
-      return res.status(403).json({ message: '只有维修人员可以接单。' })
-    }
+    const actor = req.user
 
     await pool.execute(
       `
@@ -307,14 +299,10 @@ router.put('/:id/receive', async (req, res, next) => {
   }
 })
 
-router.put('/:id/complete', async (req, res, next) => {
+router.put('/:id/complete', requireRoles('repair'), async (req, res, next) => {
   try {
-    const actor = getActor(req)
+    const actor = req.user
     const { content = '', images = [] } = req.body
-
-    if (actor.role !== 'repair') {
-      return res.status(403).json({ message: '只有维修人员可以提交完工结果。' })
-    }
 
     await pool.execute(
       `

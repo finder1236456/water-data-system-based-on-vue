@@ -1,9 +1,8 @@
 import { BASE_URL } from '../config'
-import { getStoredToken, getStoredUser } from './auth'
+import { getStoredToken } from './auth'
 
 export const request = ({ url, method = 'GET', data = {} }) =>
   new Promise((resolve, reject) => {
-    const user = getStoredUser()
     const token = getStoredToken()
 
     uni.request({
@@ -13,8 +12,6 @@ export const request = ({ url, method = 'GET', data = {} }) =>
       header: {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...(user?.id ? { 'x-user-id': String(user.id) } : {}),
-        ...(user?.type ? { 'x-user-role': String(user.type) } : {}),
       },
       success: (res) => {
         if (res.statusCode >= 200 && res.statusCode < 300) {
