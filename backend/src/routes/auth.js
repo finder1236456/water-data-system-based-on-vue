@@ -13,6 +13,7 @@ router.post('/login', async (req, res, next) => {
           users.username,
           users.password,
           users.name,
+          users.phone,
           roles.code AS role
         FROM users
         INNER JOIN roles ON roles.id = users.role_id
@@ -28,11 +29,12 @@ router.post('/login', async (req, res, next) => {
     }
 
     res.json({
-      token: `mysql-token-${user.role}`,
+      token: `mysql-token-${user.id}-${user.role}`,
       user: {
         id: user.id,
         username: user.username,
         name: user.name,
+        phone: user.phone,
         type: user.role,
       },
     })

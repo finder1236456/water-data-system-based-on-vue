@@ -4,6 +4,8 @@ USE water_data_system;
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
+DROP TABLE IF EXISTS repair_logs;
+DROP TABLE IF EXISTS repair_images;
 DROP TABLE IF EXISTS role_menus;
 DROP TABLE IF EXISTS ai_prompt_examples;
 DROP TABLE IF EXISTS ai_examples;
@@ -222,6 +224,26 @@ CREATE TABLE repair_reports (
   CONSTRAINT fk_repair_reports_maintainer FOREIGN KEY (maintainer_user_id) REFERENCES users (id)
 );
 
+CREATE TABLE repair_images (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  repair_id INT NOT NULL,
+  image_url VARCHAR(255) NOT NULL,
+  image_type VARCHAR(20) NOT NULL DEFAULT 'report',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_repair_images_report FOREIGN KEY (repair_id) REFERENCES repair_reports (id)
+);
+
+CREATE TABLE repair_logs (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  repair_id INT NOT NULL,
+  operator_user_id INT DEFAULT NULL,
+  action_type VARCHAR(30) NOT NULL,
+  content VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_repair_logs_report FOREIGN KEY (repair_id) REFERENCES repair_reports (id),
+  CONSTRAINT fk_repair_logs_user FOREIGN KEY (operator_user_id) REFERENCES users (id)
+);
+
 CREATE TABLE ai_examples (
   id INT PRIMARY KEY AUTO_INCREMENT,
   question VARCHAR(255) NOT NULL,
@@ -293,7 +315,7 @@ INSERT INTO devices (device_code, device_type, manufacturer, location, install_t
 ('WM-201', 'water_meter', '海川仪表', '2栋1单元地下水表井', '2025-01-13 09:00:00', 'online', 9),
 ('WM-202', 'water_meter', '海川仪表', '2栋2单元地下水表井', '2025-01-13 09:30:00', 'online', 10),
 ('WM-301', 'water_meter', '海川仪表', '3栋1单元地下水表井', '2025-01-14 09:00:00', 'fault', 11),
-( 'WM-302', 'water_meter', '海川仪表', '3栋2单元地下水表井', '2025-01-14 09:30:00', 'online', 12),
+('WM-302', 'water_meter', '海川仪表', '3栋2单元地下水表井', '2025-01-14 09:30:00', 'online', 12),
 ('PM-501', 'pressure_meter', '天衡设备', '5栋1单元泵房入口', '2025-01-15 09:00:00', 'online', 13),
 ('WM-602', 'water_meter', '海川仪表', '6栋2单元地下水表井', '2025-01-15 09:30:00', 'online', 14);
 
@@ -397,6 +419,7 @@ INSERT INTO repair_channels (role_name, description, sort_order) VALUES
 ('维修 UniApp 端', '支持移动端拍照上报、快速定位和工单回传。', 2);
 
 INSERT INTO repair_reports (
+  id,
   repair_code,
   title,
   region_id,
@@ -409,10 +432,15 @@ INSERT INTO repair_reports (
   report_time,
   complete_time
 ) VALUES
-('BX-202604-01', '阀门漏水', 8, '1栋2单元 601 室水表井旁', 'Web', '待派单', '住户反映阀门接口持续滴漏，地面积水明显。', 1, 3, '2026-04-02 09:20:00', NULL),
-('BX-202604-02', '水压异常', 9, '2栋1单元 1002 室入户管', 'UniApp', '处理中', '早高峰时段水压不稳，影响住户正常用水。', 4, 6, '2026-04-02 11:40:00', NULL),
-('BX-202604-03', '流量计离线', 11, '3栋1单元 地下水表井', 'Web', '待复核', '流量计离线超过 20 分钟，需要现场核查。', 5, 3, '2026-04-03 14:10:00', NULL),
-('BX-202604-04', '泵房压力波动', 13, '5栋1单元 泵房入口', 'UniApp', '已完成', '维修人员已更换压力传感器，恢复正常。', 2, 6, '2026-04-04 08:45:00', '2026-04-04 16:30:00');
+(1, 'BX-202604-01', '阀门漏水', 8, '1栋2单元 601 室水表井旁', 'Web', '待派单', '住户反映阀门接口持续滴漏，地面积水明显。', 1, 3, '2026-04-02 09:20:00', NULL),
+(2, 'BX-202604-02', '水压异常', 9, '2栋1单元 1002 室入户管', 'UniApp', '处理中', '早高峰时段水压不稳，影响住户正常用水。', 4, 6, '2026-04-02 11:40:00', NULL),
+(3, 'BX-202604-03', '流量计离线', 11, '3栋1单元 地下水表井', 'Web', '待复核', '流量计离线超过 20 分钟，需要现场核查。', 5, 3, '2026-04-03 14:10:00', NULL),
+(4, 'BX-202604-04', '泵房压力波动', 13, '5栋1单元 泵房入口', 'UniApp', '已完成', '维修人员已更换压力传感器，恢复正常。', 2, 6, '2026-04-04 08:45:00', '2026-04-04 16:30:00');
+
+INSERT INTO repair_logs (repair_id, operator_user_id, action_type, content) VALUES
+(1, 1, 'report', '用户通过 Web 端提交了阀门漏水报修。'),
+(2, 6, 'receive', '陈师傅已接单并开始现场排查。'),
+(4, 6, 'complete', '已更换压力传感器并恢复供水稳定。');
 
 INSERT INTO ai_examples (question, answer, sort_order) VALUES
 ('最近 1栋1单元夜间用水偏高怎么办？', '建议先排查夜间基流、卫生间长流水点位，并对近 7 天分时数据做异常对比。', 1),

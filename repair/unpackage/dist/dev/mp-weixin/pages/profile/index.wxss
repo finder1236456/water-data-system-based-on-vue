@@ -1,0 +1,20 @@
+
+.profile-card.data-v-201c0da5 {
+  padding: 28rpx;
+}
+.profile-row.data-v-201c0da5 {
+  display: flex;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding: 18rpx 0;
+  border-bottom: 1rpx solid rgba(120, 180, 255, 0.08);
+}
+.profile-row.data-v-201c0da5:last-of-type {
+  border-bottom: none;
+}
+.profile-label.data-v-201c0da5 {
+  color: #96b5d5;
+}
+.logout-btn.data-v-201c0da5 {
+  margin-top: 28rpx;
+}

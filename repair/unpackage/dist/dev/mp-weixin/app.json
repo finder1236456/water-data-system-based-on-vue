@@ -1,0 +1,37 @@
+{
+  "pages": [
+    "pages/login/login",
+    "pages/workbench/index",
+    "pages/repair/detail",
+    "pages/repair/report",
+    "pages/profile/index"
+  ],
+  "window": {
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "维修报修",
+    "navigationBarBackgroundColor": "#07111f",
+    "backgroundColor": "#04111e",
+    "backgroundTextStyle": "light"
+  },
+  "tabBar": {
+    "color": "#8ca9c7",
+    "selectedColor": "#2bc7ff",
+    "backgroundColor": "#07111f",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/workbench/index",
+        "text": "工单"
+      },
+      {
+        "pagePath": "pages/repair/report",
+        "text": "上报"
+      },
+      {
+        "pagePath": "pages/profile/index",
+        "text": "我的"
+      }
+    ]
+  },
+  "usingComponents": {}
+}

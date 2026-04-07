@@ -1,0 +1,1 @@
+{"version":3,"file":"auth.js","sources":["api/auth.js"],"sourcesContent":["import { request } from '../utils/request'\n\nexport const login = (payload) =>\n  request({\n    url: '/auth/login',\n    method: 'POST',\n    data: payload,\n  })\n"],"names":["request"],"mappings":";;AAEY,MAAC,QAAQ,CAAC,YACpBA,sBAAQ;AAAA,EACN,KAAK;AAAA,EACL,QAAQ;AAAA,EACR,MAAM;AACP,CAAA;;"}

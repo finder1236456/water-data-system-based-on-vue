@@ -1,0 +1,27 @@
+
+.login-page.data-v-e4e4508d {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx;
+}
+.login-panel.data-v-e4e4508d {
+  width: 100%;
+  padding: 48rpx 38rpx;
+}
+.login-panel__brand.data-v-e4e4508d {
+  margin-bottom: 20rpx;
+  color: #6edfff;
+  font-size: 56rpx;
+  font-weight: 700;
+}
+.form-block.data-v-e4e4508d {
+  margin-top: 28rpx;
+}
+.tips.data-v-e4e4508d {
+  margin-top: 24rpx;
+  text-align: center;
+  color: #89a9c8;
+  font-size: 24rpx;
+}

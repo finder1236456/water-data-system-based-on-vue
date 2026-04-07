@@ -1,0 +1,1 @@
+{"version":3,"file":"index.js","sources":["config/index.js"],"sourcesContent":["export const API_ORIGIN = 'http://192.168.31.141:3001'\nexport const BASE_URL = `${API_ORIGIN}/api`\n"],"names":[],"mappings":";AAAY,MAAC,aAAa;AACd,MAAC,WAAW,GAAG,UAAU;;;"}
